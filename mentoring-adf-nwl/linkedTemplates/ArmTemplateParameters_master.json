@@ -1,0 +1,48 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "mentoring-adf-nwl"
+		},
+		"LS_ABLB_azurementoringstorageaunwl_connectionString": {
+			"value": ""
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"value": "https://mentoring-key-vault-nwl.vault.azure.net/"
+		},
+		"LS_ABLB_azurementoringdatalakenwl_properties_typeProperties_url": {
+			"value": "https://azurementoringdatalakewl.dfs.core.windows.net/"
+		},
+		"LS_ABLB_azurementoringdatalakwl_properties_typeProperties_url": {
+			"value": "https://azurementoringdatalakwl.dfs.core.windows.net/"
+		},
+		"LS_ABLB_azurementoringstoragenwl_properties_typeProperties_sasUri_secretName": {
+			"value": "azurementoringstoragenwl-SAS"
+		},
+		"LS_ABLB_azurementoringstoregenwl_online_properties_typeProperties_sasUri_secretName": {
+			"value": "azurementoringstoragenwl-SAS-online"
+		},
+		"LS_ASQL_DataMart_properties_typeProperties_connectionString_secretName": {
+			"value": "azure-mentoring-nwl-DartMart"
+		},
+		"LS_ASQL_movies_properties_typeProperties_connectionString_secretName": {
+			"value": "azure-mentoring-nwl-movies"
+		},
+		"LS_SQL_CinemaTickets_properties_typeProperties_connectionString_secretName": {
+			"value": "CinemaTickets-MSSQLSERVER"
+		},
+		"Trigger_iyw_properties_MetadataDrivenCopyTask_iyw_TopLevel_parameters_windowStart": {
+			"value": "@{addhours(trigger().scheduledTime, -24)}"
+		},
+		"Trigger_iyw_properties_MetadataDrivenCopyTask_iyw_TopLevel_parameters_windowEnd": {
+			"value": "@trigger().scheduledTime"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}

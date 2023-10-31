@@ -1,0 +1,6 @@
+{
+	"HTTP_POST_URL": {
+		"type": "string",
+		"value": "https://mentoring-key-vault-nwl.vault.azure.net/secrets/HTTP-POST-URL-logic-app-email/8e0c381f33114db6a2b4afaa9c3ba919?api-version=7.4"
+	}
+}
