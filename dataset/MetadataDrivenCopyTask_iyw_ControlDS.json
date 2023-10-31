@@ -1,0 +1,20 @@
+{
+	"name": "MetadataDrivenCopyTask_iyw_ControlDS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ASQL_movies",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "MetadataDrivenCopyTask_iyw_20231009"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "etl",
+			"table": "MainControlTable_iyw"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,29 @@
+{
+	"name": "SinkDataLake",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ABLB_azurementoringdatalakenwl",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"outputFilename": {
+				"type": "string",
+				"defaultValue": "123"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().outputFilename",
+					"type": "Expression"
+				},
+				"folderPath": "movies",
+				"fileSystem": "raw"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

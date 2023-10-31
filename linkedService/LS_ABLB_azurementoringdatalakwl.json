@@ -1,0 +1,11 @@
+{
+	"name": "LS_ABLB_azurementoringdatalakwl",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://azurementoringdatalakwl.dfs.core.windows.net/"
+		}
+	}
+}

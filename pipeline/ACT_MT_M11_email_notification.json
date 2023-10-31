@@ -1,0 +1,99 @@
+{
+	"name": "ACT_MT_M11_email_notification",
+	"properties": {
+		"activities": [
+			{
+				"name": "Email Notification",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Get HTTP POST URL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@activity('Get HTTP POST URL').output.value",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"body": {
+						"dataFactoryName": "@{pipeline().DataFactory}",
+						"receiver": "@{pipeline().parameters.receiver}",
+						"pipelineName": "@{pipeline().parameters.pipelineName}",
+						"Pipeline_RunId": "@{pipeline().parameters.Pipeline_RunId}",
+						"Activity_Name": "@{pipeline().parameters.Activity_Name}",
+						"Error_Code": "@{pipeline().parameters.Error_Code}",
+						"Error_DateTime": "@{pipeline().parameters.Error_DateTime}",
+						"Error_Message": "@{pipeline().parameters.Error_Message}",
+						"Failure_Type": "@{pipeline().parameters.Failure_Type}"
+					}
+				}
+			},
+			{
+				"name": "Get HTTP POST URL",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@pipeline().globalParameters.HTTP_POST_URL",
+						"type": "Expression"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"receiver": {
+				"type": "string",
+				"defaultValue": "wee_liang_ng@epam.com"
+			},
+			"pipelineName": {
+				"type": "string"
+			},
+			"Pipeline_RunId": {
+				"type": "string"
+			},
+			"Activity_Name": {
+				"type": "string"
+			},
+			"Error_Code": {
+				"type": "string"
+			},
+			"Error_DateTime": {
+				"type": "string"
+			},
+			"Error_Message": {
+				"type": "string"
+			},
+			"Failure_Type": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-10-21T08:34:23Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

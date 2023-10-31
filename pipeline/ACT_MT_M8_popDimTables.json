@@ -1,0 +1,59 @@
+{
+	"name": "ACT_MT_M8_popDimTables",
+	"properties": {
+		"activities": [
+			{
+				"name": "M8_popDimTables",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "ACT_MT_DF_pop_Dimension_tables",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"tMovies": {
+								"schema": "dbo",
+								"tableName": "tMovies"
+							},
+							"tMovieStatus": {
+								"schema": "dbo",
+								"tableName": "tMovieStatus"
+							},
+							"tOnlineService": {
+								"schema": "dbo",
+								"tableName": "tOnlineService"
+							},
+							"DimMovie": {
+								"schema": "dbo",
+								"tableName": "DimMovie"
+							},
+							"DimOnlineService": {
+								"schema": "dbo",
+								"tableName": "DimOnlineService"
+							}
+						}
+					},
+					"integrationRuntime": {
+						"referenceName": "Azure-IR-M8",
+						"type": "IntegrationRuntimeReference"
+					},
+					"traceLevel": "None",
+					"cacheSinks": {
+						"firstRowOnly": true
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-10-04T12:26:11Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

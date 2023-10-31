@@ -1,0 +1,18 @@
+{
+	"name": "LS_ABLB_azurementoringstoragenwl",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"sasUri": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "AzureKeyVault1",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "azurementoringstoragenwl-SAS"
+			}
+		}
+	}
+}

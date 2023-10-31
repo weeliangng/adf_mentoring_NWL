@@ -1,0 +1,158 @@
+{
+	"name": "ACT_MT_DF_pop_Dimension_tables",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "MoviesDatabase",
+						"type": "DatasetReference"
+					},
+					"name": "tMovies",
+					"description": "Import data from MoviesDatabase tMovies"
+				},
+				{
+					"dataset": {
+						"referenceName": "MoviesDatabase",
+						"type": "DatasetReference"
+					},
+					"name": "tMovieStatus",
+					"description": "Import data from MoviesDatabase tMovieStatus"
+				},
+				{
+					"dataset": {
+						"referenceName": "MoviesDatabase",
+						"type": "DatasetReference"
+					},
+					"name": "tOnlineService"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DataMartDatabase",
+						"type": "DatasetReference"
+					},
+					"name": "DimMovie",
+					"description": "Add sink dbo.DimMovie"
+				},
+				{
+					"dataset": {
+						"referenceName": "DataMartDatabase",
+						"type": "DatasetReference"
+					},
+					"name": "DimOnlineService"
+				}
+			],
+			"transformations": [
+				{
+					"name": "join1",
+					"description": "Left join on 'tMovies' and 'tMovieStatus'"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1",
+					"description": "remove columns"
+				},
+				{
+					"name": "select2",
+					"description": "remove columns"
+				},
+				{
+					"name": "derivedColumn2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          MovieId as integer,",
+				"          MovieIdNK as integer,",
+				"          Budget as integer,",
+				"          HomepagePath as string,",
+				"          Title as string,",
+				"          OriginalTitle as string,",
+				"          ReleaseDate as date,",
+				"          Revenue as long,",
+				"          Runtime as integer,",
+				"          MovieStatusId as integer,",
+				"          AvgVote as decimal(3,1),",
+				"          CreatedDate as timestamp,",
+				"          ModifiedDate as timestamp,",
+				"          SrcFileName as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> tMovies",
+				"source(output(",
+				"          MovieStatusId as integer,",
+				"          MovieStatusName as string,",
+				"          CreatedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> tMovieStatus",
+				"source(output(",
+				"          ServiceId as integer,",
+				"          ServiceCode as string,",
+				"          ServiceName as string,",
+				"          CreatedDate as timestamp,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> tOnlineService",
+				"tMovies, tMovieStatus join(tMovies@MovieStatusId == tMovieStatus@MovieStatusId,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"select1 derive(CreatedDate = currentUTC(),",
+				"          ModifiedDate = currentUTC()) ~> derivedColumn1",
+				"join1 select(mapColumn(",
+				"          MovieIdNK,",
+				"          Title,",
+				"          ReleaseDate,",
+				"          Runtime,",
+				"          MovieStatus = MovieStatusName",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"tOnlineService select(mapColumn(",
+				"          ServiceCode,",
+				"          ServiceName",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select2 derive(CreatedDate = currentUTC(),",
+				"          ModifiedDate = currentUTC()) ~> derivedColumn2",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> DimMovie",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> DimOnlineService"
+			]
+		}
+	}
+}

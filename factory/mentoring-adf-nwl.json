@@ -1,0 +1,17 @@
+{
+	"name": "mentoring-adf-nwl",
+	"properties": {
+		"globalParameters": {
+			"HTTP_POST_URL": {
+				"type": "string",
+				"value": "https://mentoring-key-vault-nwl.vault.azure.net/secrets/HTTP-POST-URL-logic-app-email/8e0c381f33114db6a2b4afaa9c3ba919?api-version=7.4"
+			}
+		}
+	},
+	"location": "southeastasia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "3ae19626-605f-4467-88b1-b1108d7f5ae0",
+		"tenantId": "b41b72d0-4e9f-4c26-8a69-f949f367c91d"
+	}
+}

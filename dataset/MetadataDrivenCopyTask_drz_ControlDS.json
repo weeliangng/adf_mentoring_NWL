@@ -1,0 +1,20 @@
+{
+	"name": "MetadataDrivenCopyTask_drz_ControlDS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ASQL_movies",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "MetadataDrivenCopyTask_drz_20231009"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "etl",
+			"table": "MainControlTable_drz"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

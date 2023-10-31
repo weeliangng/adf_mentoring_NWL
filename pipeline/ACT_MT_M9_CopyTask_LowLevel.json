@@ -1,0 +1,627 @@
+{
+	"name": "ACT_MT_M9_CopyTask_LowLevel",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "@{json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).fileSystem}/@{json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).folderPath}/@{json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).fileName}"
+					},
+					{
+						"name": "Destination",
+						"value": "@{json(pipeline().parameters.ObjectsPerGroupToCopy.SinkObjectSettings).schema}.@{json(pipeline().parameters.ObjectsPerGroupToCopy.SinkObjectSettings).table}"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "source_filename",
+								"value": "$$FILEPATH"
+							},
+							{
+								"name": "pipelineId",
+								"value": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": false,
+							"wildcardFolderPath": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).folderPath",
+								"type": "Expression"
+							},
+							"wildcardFileName": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).wildcardFileName",
+								"type": "Expression"
+							},
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": {
+							"value": "@{concat('TRUNCATE TABLE ', json(pipeline().parameters.ObjectsPerGroupToCopy.SinkObjectSettings).schema, '.', json(pipeline().parameters.ObjectsPerGroupToCopy.SinkObjectSettings).table)}",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@coalesce(json(pipeline().parameters.ObjectsPerGroupToCopy.CopyActivitySettings).translator,'')",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_ADLS_MT_M9_Source",
+						"type": "DatasetReference",
+						"parameters": {
+							"columnDelimiter": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).columnDelimiter",
+								"type": "Expression"
+							},
+							"escapeChar": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).escapeChar",
+								"type": "Expression"
+							},
+							"quoteChar": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).quoteChar",
+								"type": "Expression"
+							},
+							"fileName": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).fileName",
+								"type": "Expression"
+							},
+							"folderPath": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).folderPath",
+								"type": "Expression"
+							},
+							"fileSystem": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).fileSystem",
+								"type": "Expression"
+							},
+							"wildcardFileName": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SourceObjectSettings).wildcardFileName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ASQL_MT_M9_Sink",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SinkObjectSettings).schema",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@json(pipeline().parameters.ObjectsPerGroupToCopy.SinkObjectSettings).table",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Insert logging",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy data1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[InsertLogEntry]",
+					"storedProcedureParameters": {
+						"Activity_Name": {
+							"value": {
+								"value": "@activity('Copy data1').output.billingReference.activityType",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Billing_Duration": {
+							"value": {
+								"value": "@activity('Copy data1').output.billingReference.totalBillableDuration[1].duration",
+								"type": "Expression"
+							},
+							"type": "Double"
+						},
+						"Billing_Unit": {
+							"value": {
+								"value": "@activity('Copy data1').output.billingReference.totalBillableDuration[0].unit",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Copy_Duration": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].profile.transfer.details.writingToSink.workingDuration",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Execution_Duration": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].duration",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Execution_End_Time": {
+							"value": {
+								"value": "@addseconds(activity('Copy data1').output.executionDetails[0].start, activity('Copy data1').output.executionDetails[0].duration)",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"Execution_Start_Time": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].start",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"Execution_Status": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].duration",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Files_Read": {
+							"value": {
+								"value": "@activity('Copy data1').output.filesRead",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Meter_Type": {
+							"value": {
+								"value": "@activity('Copy data1').output.billingReference.totalBillableDuration[0].meterType",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Pipeline_RunId": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Queue_Duration": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].profile.queue.duration",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Rows_Copied": {
+							"value": {
+								"value": "@activity('Copy data1').output.rowsCopied",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Rows_Read": {
+							"value": {
+								"value": "@activity('Copy data1').output.rowsRead",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Transfer_Duration": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].profile.transfer.duration",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Used_Data_Integration_Units": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].usedDataIntegrationUnits",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Used_Parallel_Copies": {
+							"value": {
+								"value": "@activity('Copy data1').output.executionDetails[0].usedParallelCopies",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"Pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_ASQL_movies",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "insert error log if there is logging error",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Insert logging",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[InsertErrorLog]",
+					"storedProcedureParameters": {
+						"Activity_Name": {
+							"value": {
+								"value": "@activity('Insert logging').Error.target",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Error_Code": {
+							"value": {
+								"value": "@activity('Insert logging').Error.errorCode",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Error_DateTime": {
+							"value": {
+								"value": "@utcnow()",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"Error_Message": {
+							"value": {
+								"value": "@activity('Insert logging').Error.message",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Failure_Type": {
+							"value": {
+								"value": "@activity('Insert logging').Error.failureType",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Pipeline_RunId": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_ASQL_movies",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "insert error log if there is copy error",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy data1",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[InsertErrorLog]",
+					"storedProcedureParameters": {
+						"Activity_Name": {
+							"value": {
+								"value": "@activity('Copy data1').output.errors[0].target",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Error_Code": {
+							"value": {
+								"value": "@activity('Copy data1').output.errors[0].code",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Error_DateTime": {
+							"value": {
+								"value": "@utcnow()",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"Error_Message": {
+							"value": {
+								"value": "@activity('Copy data1').output.errors[0].message",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Failure_Type": {
+							"value": {
+								"value": "@activity('Copy data1').output.errors[0].failureType",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Pipeline_RunId": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_ASQL_movies",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Mark fail",
+				"type": "Fail",
+				"dependsOn": [
+					{
+						"activity": "insert error log if there is logging error",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"message": {
+						"value": "@activity('Insert logging').Error.message",
+						"type": "Expression"
+					},
+					"errorCode": {
+						"value": "@activity('Insert logging').Error.errorCode",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Execute Pipeline1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "insert error log if there is logging error",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "ACT_MT_M11_email_notification",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"receiver": "wee_liang_ng@epam.com",
+						"pipelineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						},
+						"Pipeline_RunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"Activity_Name": {
+							"value": "@activity('Insert logging').Error.target",
+							"type": "Expression"
+						},
+						"Error_Code": {
+							"value": "@activity('Insert logging').Error.errorCode",
+							"type": "Expression"
+						},
+						"Error_DateTime": {
+							"value": "@utcnow()",
+							"type": "Expression"
+						},
+						"Error_Message": {
+							"value": "@activity('Insert logging').Error.message",
+							"type": "Expression"
+						},
+						"Failure_Type": {
+							"value": "@activity('Insert logging').Error.failureType",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"ObjectsPerGroupToCopy": {
+				"type": "object",
+				"defaultValue": {
+					"SinkObjectSettings": {
+						"schema": "stg",
+						"table": "ratings"
+					},
+					"SourceObjectSettings": {
+						"columnDelimiter": "|",
+						"escapeChar": "\"",
+						"quoteChar": "\"",
+						"fileName": "",
+						"folderPath": "metadata-driven",
+						"fileSystem": "raw",
+						"wildcardFileName": "ratings*"
+					},
+					"CopyActivitySettings": {
+						"translator": {
+							"type": "TabularTranslator",
+							"mappings": [
+								{
+									"source": {
+										"name": "user_id",
+										"type": "String",
+										"physicalType": "String"
+									},
+									"sink": {
+										"name": "userId",
+										"type": "String",
+										"physicalType": "nvarchar"
+									}
+								},
+								{
+									"source": {
+										"name": "movie_id",
+										"type": "String",
+										"physicalType": "String"
+									},
+									"sink": {
+										"name": "movieId",
+										"type": "String",
+										"physicalType": "nvarchar"
+									}
+								},
+								{
+									"source": {
+										"name": "rating",
+										"type": "String",
+										"physicalType": "String"
+									},
+									"sink": {
+										"name": "rating",
+										"type": "String",
+										"physicalType": "nvarchar"
+									}
+								},
+								{
+									"source": {
+										"name": "timestamp",
+										"physicalType": "String"
+									},
+									"sink": {
+										"name": "timestamp",
+										"type": "String",
+										"physicalType": "nvarchar"
+									}
+								},
+								{
+									"source": {
+										"name": "pipelineId",
+										"type": "String"
+									},
+									"sink": {
+										"name": "pipelineId",
+										"type": "String",
+										"physicalType": "nvarchar"
+									}
+								},
+								{
+									"source": {
+										"name": "source_filename",
+										"type": "String"
+									},
+									"sink": {
+										"name": "source_filename",
+										"type": "String",
+										"physicalType": "nvarchar"
+									}
+								}
+							],
+							"typeConversion": true,
+							"typeConversionSettings": {
+								"allowDataTruncation": true,
+								"treatBooleanAsNumber": false
+							}
+						}
+					}
+				}
+			}
+		},
+		"variables": {
+			"error": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "ACT_MT_M9"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-10-21T08:36:12Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

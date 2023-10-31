@@ -1,0 +1,91 @@
+{
+	"name": "ACT_MT_M5_master",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy from blob storage to datalake",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "ACT_MT_Copy_CopyPipeline",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Copy file to staging and Lload data to 3NF schema",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy from blob storage to datalake",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "ACT_MT_Copy_M5_processfiles",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"Files": {
+							"value": "@pipeline().parameters.Files",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Move Copied Files to Archive",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy file to staging and Lload data to 3NF schema",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "ACT_MT_M5_moveFiles",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"parameters": {
+			"Files": {
+				"type": "array",
+				"defaultValue": [
+					{
+						"filetoCopy": "credits*",
+						"schema": "stg",
+						"tableName": "credits"
+					},
+					{
+						"filetoCopy": "movies_metadata*",
+						"schema": "stg",
+						"tableName": "movies_metadata"
+					},
+					{
+						"filetoCopy": "ratings_part*",
+						"schema": "stg",
+						"tableName": "ratings"
+					}
+				]
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-08-28T19:15:00Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
